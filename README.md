@@ -1,56 +1,73 @@
-# Welcome to your Expo app 👋
+# 🎛️ Lights On - Automation Control Panel (ECAP Escape Game)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+This project is an immersive gaming application developed for the **ECAP** escape room. Designed specifically for a tablet layout, it mimics an industrial **home automation / security control panel** belonging to a secured facility.
 
-## Get started
+The hidden objective for players is to solve a puzzle based on the reverse **Lights Out** game logic (**Lights On**) to unlock the next step of their mission.
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## 🕹️ Concept & Gameplay
 
-2. Start the app
+* **The Illusion:** The screen displays a realistic automation interface blinders and domotic equipment.
+* **The Escape Room Pitch:** The facility's system is offline or locked down. Players must "power up" all sectors or overload the sub-systems to force a system override.
+* **The Mechanics (Lights On):**
+  * The interface features a grid of buttons (toggle switches/sectors).
+  * Pressing a button toggles its state (on/off) as well as the states of its adjacent neighbors (up, down, left, right).
+  * **Win Condition:** Successfully turn **ON** all indicators on the grid to restore total power and find the related SYNC code.
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+## 🛠️ Tech Stack
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+The application is powered by a modern **Expo SDK 58** and **React Native 19** ecosystem:
 
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+* **Framework:** [Expo](https://expo.dev) (Managed workflow, targeting optimal tablet deployment).
+* **Navigation:** `expo-router` for file-based native routing.
+* **Animations:** `react-native-reanimated` for smooth, immersive transitions (glitch effects, warning states, glowing interfaces).
+* **Multimedia:** `expo-audio` and `expo-video` for background industrial ambient noises, error feedback, or CCTV loop videos.
+* **Icons:** `lucide-react-native` for a clean, technological, sci-fi UI design.
+* **Localization:** `react-i18next` to easily swap game languages between local and foreign players.
 
-## Get a fresh project
+---
 
-When you're ready, run:
+## 🚀 Getting Started
 
+### Prerequisites
+Ensure you have [Node.js](https://nodejs.org) installed on your development/integration machine.
+
+### 1. Clone the project and install dependencies
 ```bash
-npm run reset-project
+git clone git@github.com:VillageElargi/ECAP-DOMOTIC-PANIC.git
+cd lights-out
+npm install
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+### 2. Start the development server
+```bash
+npm run start
+```
 
-### Other setup steps
+### 3. Run on tablet / simulator
+From the Expo interactive terminal, select your target platform:
+* **iOS (iPad):** Press `i` (Requires macOS and Xcode/Simulator).
+* **Android (Tablet):** Press `a` (Requires Android Studio or a physical tablet connected via ADB).
+* **Web:** Press `w` or run `npm run web` to quickly test the game logic and UI in your browser.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+---
 
-## Learn more
+## 📁 Project Structure (Overview)
 
-To learn more about developing your project with Expo, look at the following resources:
+* `/app`: Route screens and game states handled by `expo-router`.
+* `/components`: Reusable components (the Lights On grid, UI switches, feedback screens).
+* `/assets`: Media files (sound effects for success/errors, background loop videos).
+* `/scripts`: Utility scripts, including default layout reset helpers.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+---
 
-## Join the community
+## ⚙️ Room Maintenance & Game Master Info
 
-Join our community of developers creating universal apps.
+* **Resetting the game:** If players get stuck or to reset the room between sessions, the app can be reloaded by double tapping each screen corner.
+* **Kiosk Mode Recommendation:** For live escape room deployments, it is highly recommended to lock the tablet using **Single App Mode** (iOS Guided Access / Android Screen Pinning) so players cannot close or exit the interface.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+---
+EXCLUSIVE PROPERTY OF ALYEM SÀRL © 2026
