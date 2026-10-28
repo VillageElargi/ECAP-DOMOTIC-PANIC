@@ -1,98 +1,178 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import * as ScreenOrientation from "expo-screen-orientation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Pressable, StatusBar, StyleSheet, View } from "react-native";
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import Home from "@/components/home";
+import BrandScreen from "@/components/intro/brand-screen";
+import ConnectScreen from "@/components/intro/connect-screen";
+import HackingScreen from "@/components/intro/hacking-screen";
+import { preloadImages } from "@/utils/preload-images";
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
+type Phase = "connect" | "hack" | "brand" | "home";
+type Corner = "topLeft" | "topRight" | "bottomLeft" | "bottomRight";
+
+const DOUBLE_TAP_DELAY = 350;
+const RESET_SEQUENCE_DELAY = 4000;
+const CORNER_SIZE = 70;
+
+export default function App() {
+  const [phase, setPhase] = useState<Phase>("connect");
+  const [imagesReady, setImagesReady] = useState(false);
+
+  const lastTapRef = useRef<Record<Corner, number>>({
+    topLeft: 0,
+    topRight: 0,
+    bottomLeft: 0,
+    bottomRight: 0,
+  });
+
+  const validatedCornersRef = useRef<Set<Corner>>(new Set());
+  const sequenceStartRef = useRef(0);
+
+  useEffect(() => {
+    ScreenOrientation.lockAsync(
+      ScreenOrientation.OrientationLock.LANDSCAPE,
+    ).catch((error) => {
+      console.warn("Impossible de verrouiller le paysage :", error);
+    });
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    preloadImages()
+      .catch((error) => {
+        console.warn("Erreur de préchargement des images :", error);
+      })
+      .finally(() => {
+        if (mounted) {
+          setImagesReady(true);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const resetApp = useCallback(() => {
+    validatedCornersRef.current.clear();
+    sequenceStartRef.current = 0;
+
+    lastTapRef.current = {
+      topLeft: 0,
+      topRight: 0,
+      bottomLeft: 0,
+      bottomRight: 0,
+    };
+
+    setPhase("connect");
+  }, []);
+
+  const handleCornerTap = useCallback(
+    (corner: Corner) => {
+      const now = Date.now();
+
+      if (
+        sequenceStartRef.current !== 0 &&
+        now - sequenceStartRef.current > RESET_SEQUENCE_DELAY
+      ) {
+        validatedCornersRef.current.clear();
+        sequenceStartRef.current = 0;
+      }
+
+      if (sequenceStartRef.current === 0) {
+        sequenceStartRef.current = now;
+      }
+
+      const lastTap = lastTapRef.current[corner];
+
+      if (now - lastTap <= DOUBLE_TAP_DELAY && lastTap !== 0) {
+        validatedCornersRef.current.add(corner);
+        lastTapRef.current[corner] = 0;
+
+        const allCornersValidated = validatedCornersRef.current.size === 4;
+
+        if (allCornersValidated) {
+          resetApp();
+        }
+      } else {
+        lastTapRef.current[corner] = now;
+      }
+    },
+    [resetApp],
   );
-}
 
-export default function HomeScreen() {
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <View style={styles.container}>
+      <StatusBar hidden />
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+      {phase === "home" ? (
+        imagesReady ? (
+          <Home />
+        ) : null
+      ) : (
+        <>
+          {phase === "connect" && (
+            <ConnectScreen onConnect={() => setPhase("hack")} />
+          )}
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+          {phase === "hack" && (
+            <HackingScreen onComplete={() => setPhase("brand")} />
+          )}
 
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+          {phase === "brand" && (
+            <BrandScreen onComplete={() => setPhase("home")} />
+          )}
+        </>
+      )}
+
+      {/* Zones tactiles invisibles des quatre coins */}
+      <Pressable
+        style={[styles.corner, styles.topLeft]}
+        onPress={() => handleCornerTap("topLeft")}
+      />
+      <Pressable
+        style={[styles.corner, styles.topRight]}
+        onPress={() => handleCornerTap("topRight")}
+      />
+      <Pressable
+        style={[styles.corner, styles.bottomLeft]}
+        onPress={() => handleCornerTap("bottomLeft")}
+      />
+      <Pressable
+        style={[styles.corner, styles.bottomRight]}
+        onPress={() => handleCornerTap("bottomRight")}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+    backgroundColor: "#050914",
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+  corner: {
+    position: "absolute",
+    width: CORNER_SIZE,
+    height: CORNER_SIZE,
+    zIndex: 999,
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+  topLeft: {
+    top: 0,
+    left: 0,
   },
-  title: {
-    textAlign: 'center',
+  topRight: {
+    top: 0,
+    right: 0,
   },
-  code: {
-    textTransform: 'uppercase',
+  bottomLeft: {
+    bottom: 0,
+    left: 0,
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  bottomRight: {
+    bottom: 0,
+    right: 0,
   },
 });
